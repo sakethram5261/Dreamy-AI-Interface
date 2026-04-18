@@ -1,7 +1,11 @@
-node_modules
-dist
-.env
-.env.local
-.env.production
-.vercel
-*.log
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
+}
