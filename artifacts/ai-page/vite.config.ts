@@ -29,9 +29,6 @@ export default defineConfig({
         ]
       : []),
   ],
-  define: {
-    "import.meta.env.VITE_HF_API_KEY": JSON.stringify(process.env.VITE_HF_API_KEY ?? ""),
-  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
@@ -51,6 +48,12 @@ export default defineConfig({
     fs: {
       strict: true,
       deny: ["**/.*"],
+    },
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
     },
   },
   preview: {

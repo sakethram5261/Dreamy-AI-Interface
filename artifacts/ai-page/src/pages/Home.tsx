@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Loader2 } from "lucide-react";
 
-const MODEL = "mistralai/Mistral-7B-Instruct-v0.3";
-const HF_KEY = import.meta.env.VITE_HF_API_KEY as string | undefined ?? "";
+const MODEL = "Lumina";
 
 const PROMPTS = [
   "Explain something complex in simple words",
@@ -43,36 +42,19 @@ export function Home() {
     setError(null);
 
     try {
-      const history = next
-        .map((m) => m.role === "user" ? `[INST] ${m.content} [/INST]` : m.content)
-        .join("\n");
-
-      const res = await fetch(`https://api-inference.huggingface.co/models/${MODEL}`, {
+      const res = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${HF_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          inputs: history,
-          parameters: { max_new_tokens: 512, temperature: 0.7, return_full_text: false },
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: next }),
       });
 
+      const data = await res.json() as { text?: string; error?: string };
+
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        if (res.status === 503) throw new Error("Model is warming up — wait a moment and try again.");
-        throw new Error((err as { error?: string }).error ?? `Something went wrong (${res.status})`);
+        throw new Error(data.error ?? `Something went wrong (${res.status})`);
       }
 
-      const data = await res.json();
-      const text: string = Array.isArray(data) && data[0]?.generated_text
-        ? data[0].generated_text
-        : typeof data?.generated_text === "string"
-        ? data.generated_text
-        : "No response.";
-
-      setMsgs((prev) => [...prev, { role: "assistant", content: text.trim() }]);
+      setMsgs((prev) => [...prev, { role: "assistant", content: data.text ?? "No response." }]);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
